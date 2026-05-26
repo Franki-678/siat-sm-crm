@@ -5,10 +5,9 @@ const nextConfig: NextConfig = {
   // standalone es solo para Docker/self-hosting.
 
   // Incluir model/rf_compact.json en el bundle de la función serverless /api/rf-predict
-  experimental: {
-    outputFileTracingIncludes: {
-      "/api/rf-predict": ["./model/**"],
-    },
+  // (movido de experimental en Next.js 15+)
+  outputFileTracingIncludes: {
+    "/api/rf-predict": ["./model/**"],
   },
 };
 
