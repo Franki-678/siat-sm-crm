@@ -6,7 +6,7 @@ const N8N_TIMEOUT_MS = 20_000;
 export async function POST(req: NextRequest) {
   const n8nUrl = process.env.NEXT_PUBLIC_N8N_WEBHOOK_URL;
 
-  if (!n8nUrl || n8nUrl.includes("TU_N8N_ORACLE")) {
+  if (!n8nUrl || n8nUrl.includes("TU_N8N_ORACLE") || n8nUrl.includes("TU_SUBDOMINIO")) {
     return NextResponse.json(
       { error: "Webhook URL de n8n no configurada. Añade NEXT_PUBLIC_N8N_WEBHOOK_URL en las variables de entorno." },
       { status: 503 }

@@ -1,0 +1,97 @@
+{
+  "name": "SIAT-SM Motor de Riesgo Cardiorrespiratorio",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "siat-sm",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "node-webhook",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [160, 300],
+      "webhookId": "siat-sm"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://siat-sm-crm.vercel.app/api/rf-predict",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ SEXOa: $json.SEXOa, EDADa: $json.EDADa, NIVEST: $json.NIVEST, T112: $json.T112, T113: $json.T113, V121: $json.V121, W127: $json.W127, IMCa: $json.IMCa }) }}",
+        "options": { "timeout": 25000 }
+      },
+      "id": "node-rf",
+      "name": "RF Predict",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [380, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://xysledaqzlelvppdkbvp.supabase.co/rest/v1/municipios_ivsm?codigo_ine=eq.{{ $('Webhook').item.json.codigo_ine }}&select=ivsm_score,nombre",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey",        "value": "={{ $env.SUPABASE_ANON_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_ANON_KEY }}" }
+          ]
+        },
+        "options": { "timeout": 10000 }
+      },
+      "id": "node-ivsm",
+      "name": "IVSM Supabase",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [600, 300]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// ─── Obtener datos de nodos anteriores ──────────────────────────────────────\nconst input      = $('Webhook').item.json;\nconst rfResult   = $('RF Predict').item.json;    // { p_base: 0.401827 }\nconst ivsmResult = $('IVSM Supabase').item.json; // Array | Object\n\n// p_base del modelo RF (predicción de riesgo cardiorrespiratorio)\nconst p_base = parseFloat(rfResult.p_base);\n\n// ivsm_score: Supabase REST devuelve array [{ivsm_score, nombre}]\nconst ivsmArr    = Array.isArray(ivsmResult) ? ivsmResult : [ivsmResult];\nconst ivsmRow    = ivsmArr.length > 0 ? ivsmArr[0] : null;\nconst ivsm_score = ivsmRow ? parseFloat(ivsmRow.ivsm_score) : 0.30; // fallback media nacional\nconst municipio  = ivsmRow ? ivsmRow.nombre : null;\n\n// ─── Fórmula de síntesis SIAT-SM ────────────────────────────────────────────\n// RT = 0.55 · P_Base  +  0.20 · IVSM  +  0.25 · (P_Base × IVSM)\nconst riesgo_total = 0.55 * p_base + 0.20 * ivsm_score + 0.25 * (p_base * ivsm_score);\n\n// ─── Clasificación ──────────────────────────────────────────────────────────\nlet categoria, tipo_alerta, descripcion, recomendacion;\n\nif (riesgo_total >= 0.65) {\n  categoria     = 'critica';\n  tipo_alerta   = 'ALERTA CRÍTICA';\n  descripcion   = 'Riesgo cardiorrespiratorio muy elevado.';\n  recomendacion = 'Consulte con su médico en las próximas 24h. Evite esfuerzos físicos y exposición a contaminantes.';\n} else if (riesgo_total >= 0.45) {\n  categoria     = 'preventiva';\n  tipo_alerta   = 'ALERTA PREVENTIVA';\n  descripcion   = 'Riesgo moderado-alto. Se recomienda seguimiento médico próximo.';\n  recomendacion = 'Solicite cita médica en los próximos días. Reduzca el tabaquismo y mejore la actividad física.';\n} else if (riesgo_total >= 0.25) {\n  categoria     = 'informativa';\n  tipo_alerta   = 'ALERTA INFORMATIVA';\n  descripcion   = 'Riesgo moderado. Hábitos de vida susceptibles de mejora.';\n  recomendacion = 'Mejore la dieta, incremente la actividad física y reduzca el consumo de alcohol.';\n} else {\n  categoria     = 'sin_alerta';\n  tipo_alerta   = 'SIN ALERTA';\n  descripcion   = 'Riesgo cardiorrespiratorio bajo en las condiciones actuales.';\n  recomendacion = 'Mantenga sus hábitos saludables y realice revisiones periódicas.';\n}\n\n// ─── Respuesta ───────────────────────────────────────────────────────────────\nreturn [{ json: {\n  p_base:       Math.round(p_base       * 1e6) / 1e6,\n  ivsm_score:   Math.round(ivsm_score   * 1e6) / 1e6,\n  riesgo_total: Math.round(riesgo_total * 1e6) / 1e6,\n  categoria,\n  tipo_alerta,\n  descripcion,\n  recomendacion,\n  municipio,\n  codigo_ine: input.codigo_ine ?? null,\n}}];\n"
+      },
+      "id": "node-sintesis",
+      "name": "Síntesis RT",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [820, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}",
+        "options": { "responseCode": 200 }
+      },
+      "id": "node-respond",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1040, 300]
+    }
+  ],
+  "connections": {
+    "Webhook":        { "main": [[{ "node": "RF Predict",          "type": "main", "index": 0 }]] },
+    "RF Predict":     { "main": [[{ "node": "IVSM Supabase",       "type": "main", "index": 0 }]] },
+    "IVSM Supabase":  { "main": [[{ "node": "Síntesis RT",         "type": "main", "index": 0 }]] },
+    "Síntesis RT":    { "main": [[{ "node": "Respond to Webhook",  "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "versionId": "1",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "siat-sm-crm"
+  },
+  "id": "siat-sm-motor",
+  "tags": [{ "id": "siat-sm", "name": "SIAT-SM" }]
+}
