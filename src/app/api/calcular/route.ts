@@ -26,16 +26,28 @@ export async function POST(req: NextRequest) {
     });
 
     clearTimeout(timeoutId);
-    const data = await upstream.json();
+
+    // Leer como text primero para no romper si n8n devuelve HTML (workflow inactivo)
+    const text = await upstream.text();
 
     if (!upstream.ok) {
       return NextResponse.json(
-        { error: `Error del motor: ${upstream.status}`, detail: data },
+        { error: 'motor_error', status: upstream.status, detail: text.slice(0, 300) },
         { status: upstream.status }
       );
     }
 
-    return NextResponse.json(data);
+    let data: unknown;
+    try {
+      data = JSON.parse(text);
+    } catch {
+      return NextResponse.json(
+        { error: 'parse_error', message: 'n8n respondió sin JSON — verificá que el workflow esté activo', raw: text.slice(0, 200) },
+        { status: 502 }
+      );
+    }
+
+    return NextResponse.json(data as Record<string, unknown>);
   } catch (err) {
     clearTimeout(timeoutId);
     if (err instanceof Error && err.name === "AbortError") {
