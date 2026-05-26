@@ -30,8 +30,12 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
-.env*
+# env files — NUNCA subir .env.local al repo (contiene keys de Supabase y n8n)
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+# .env.example SÍ se sube (no tiene keys reales)
 
 # vercel
 .vercel
