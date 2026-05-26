@@ -1,7 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 
-const supabaseUrl  = process.env.NEXT_PUBLIC_SUPABASE_URL  ?? "https://xysledaqzlelvppdkbvp.supabase.co";
-const supabaseAnon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
+const supabaseUrl  = "https://xysledaqzlelvppdkbvp.supabase.co";
+const supabaseAnon = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh5c2xlZGFxemxlbHZwcGRrYnZwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk4MDk2NDksImV4cCI6MjA5NTM4NTY0OX0.WsBR9w5btRRbt3rdEqcjLAwDVmpZbUrKsxMSNr3fZGY";
 
 // Sin genérico Database hasta aplicar la migración y regenerar tipos
 // (ejecutar: npx supabase gen types typescript --project-id xysledaqzlelvppdkbvp)
