@@ -1,26 +1,233 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+/* ─────────────────────────────────────────────
+   SIAT-SM · Clean Medical Enterprise Design System
+   ───────────────────────────────────────────── */
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Fondos */
+  --bg-primary:    #ffffff;
+  --bg-secondary:  #f8fafc;
+  --bg-tertiary:   #f1f5f9;
+  --bg-card:       #ffffff;
+  --bg-card-hover: #f8fafc;
+
+  /* Textos */
+  --text-primary:   #0f172a;
+  --text-secondary: #475569;
+  --text-muted:     #94a3b8;
+  --text-label:     #334155;
+
+  /* Bordes */
+  --border-default: #e2e8f0;
+  --border-focus:   #94a3b8;
+  --border-subtle:  #f1f5f9;
+
+  /* Colores de resultado — pastel desaturado */
+  --result-safe-bg:       #f0fdf4;
+  --result-safe-border:   #86efac;
+  --result-safe-text:     #166534;
+
+  --result-medium-bg:     #fefce8;
+  --result-medium-border: #fde68a;
+  --result-medium-text:   #713f12;
+
+  --result-warning-bg:     #fff7ed;
+  --result-warning-border: #fed7aa;
+  --result-warning-text:   #9a3412;
+
+  --result-critical-bg:     #fef2f2;
+  --result-critical-border: #fca5a5;
+  --result-critical-text:   #7f1d1d;
+
+  /* Sombras */
+  --shadow-card:     0 1px 3px 0 rgb(0 0 0 / 0.04), 0 1px 2px -1px rgb(0 0 0 / 0.04);
+  --shadow-elevated: 0 4px 6px -1px rgb(0 0 0 / 0.06);
+
+  /* Shadcn compatibility */
+  --background:           var(--bg-secondary);
+  --foreground:           var(--text-primary);
+  --card:                 var(--bg-card);
+  --card-foreground:      var(--text-primary);
+  --popover:              var(--bg-card);
+  --popover-foreground:   var(--text-primary);
+  --primary:              #0f172a;
+  --primary-foreground:   #ffffff;
+  --secondary:            var(--bg-tertiary);
+  --secondary-foreground: var(--text-primary);
+  --muted:                var(--bg-tertiary);
+  --muted-foreground:     var(--text-muted);
+  --accent:               var(--bg-tertiary);
+  --accent-foreground:    var(--text-primary);
+  --destructive:          #dc2626;
+  --border:               var(--border-default);
+  --input:                var(--border-default);
+  --ring:                 var(--border-focus);
+  --radius:               0.5rem;
+
+  /* Sidebar tokens */
+  --sidebar:                    var(--bg-card);
+  --sidebar-foreground:         var(--text-primary);
+  --sidebar-primary:            #0f172a;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent:             var(--bg-tertiary);
+  --sidebar-accent-foreground:  var(--text-primary);
+  --sidebar-border:             var(--border-default);
+  --sidebar-ring:               var(--border-focus);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ─────────────────────────────────────────────
+   Base
+   ───────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ─────────────────────────────────────────────
+   Componentes base
+   ───────────────────────────────────────────── */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  box-shadow: var(--shadow-card);
+}
+
+.input-field {
+  width: 100%;
+  border: 1px solid var(--border-default);
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 14px;
+  color: var(--text-primary);
+  background: var(--bg-primary);
+  outline: none;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+  appearance: none;
+}
+
+.input-field:focus {
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px rgb(148 163 184 / 0.15);
+}
+
+.input-field::placeholder {
+  color: var(--text-muted);
+}
+
+select.input-field {
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2394a3b8' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 30px;
+}
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: #0f172a;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 150ms ease;
+  text-decoration: none;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #1e293b;
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-default);
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 150ms ease, border-color 150ms ease;
+  text-decoration: none;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: var(--bg-tertiary);
+  border-color: var(--border-focus);
+}
+
+.result-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  border: 1px solid;
+}
+
+.result-badge-safe {
+  background: var(--result-safe-bg);
+  border-color: var(--result-safe-border);
+  color: var(--result-safe-text);
+}
+
+.result-badge-medium {
+  background: var(--result-medium-bg);
+  border-color: var(--result-medium-border);
+  color: var(--result-medium-text);
+}
+
+.result-badge-warning {
+  background: var(--result-warning-bg);
+  border-color: var(--result-warning-border);
+  color: var(--result-warning-text);
+}
+
+.result-badge-critical {
+  background: var(--result-critical-bg);
+  border-color: var(--result-critical-border);
+  color: var(--result-critical-text);
+}
+
+/* ─────────────────────────────────────────────
+   Scrollbar sutil
+   ───────────────────────────────────────────── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-default); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--border-focus); }
+
+/* ─────────────────────────────────────────────
+   Shadcn overrides — compatibilidad CSS puro
+   ───────────────────────────────────────────── */
+*, *::before, *::after {
+  border-color: var(--border-default);
 }
