@@ -2,7 +2,8 @@
  * POST /api/rf-predict
  *
  * Runs StandardScaler + RandomForest inference server-side.
- * The model is bundled as model/rf_compact.json (276 KB).
+ * The model is bundled via require() — Turbopack/Webpack include it at build time,
+ * no file-system access needed at runtime (works on any serverless platform).
  *
  * Request body:
  *   { SEXOa, EDADa, NIVEST, T112, T113, V121, W127, IMCa }  (raw, unscaled)
@@ -12,34 +13,25 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import path from "path";
-import fs from "fs";
 
 // ── Scaler params (StandardScaler fitted on training data) ────────────────────
 const MEANS  = [1.5195, 45.8924, 6.1993, 2.0501, 0.7095, 2.9176, 5.4888, 2.8407];
 const SCALES = [0.4996, 14.1542, 1.9123, 1.0121, 1.5921, 1.2302, 2.6652, 1.2947];
 const FEATURES = ["SEXOa","EDADa","NIVEST","T112","T113","V121","W127","IMCa"] as const;
-type FeatureKey = typeof FEATURES[number];
 
-// ── Lazy-load model from disk (cached between hot requests) ────────────────────
+// ── Model types ───────────────────────────────────────────────────────────────
 type Tree = {
   l: number[];   // left children  (-1 = leaf)
   r: number[];   // right children (-1 = leaf)
   f: number[];   // feature index  (-2 = leaf)
   t: number[];   // threshold      (-2.0 = leaf)
-  p: number[];   // P(class=1) at each node (pre-computed from leaf value counts)
+  p: number[];   // P(class=1) at each node
 };
 type RFModel = { trees: Tree[] };
 
-let _model: RFModel | null = null;
-function getModel(): RFModel {
-  if (_model) return _model;
-  // model/ is at project root, which Vercel includes automatically
-  const modelPath = path.join(process.cwd(), "model", "rf_compact.json");
-  const raw = fs.readFileSync(modelPath, "utf-8");
-  _model = JSON.parse(raw) as RFModel;
-  return _model;
-}
+// ── Load model once at module init (bundled by Turbopack/Webpack via require) ──
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const MODEL: RFModel = require("../../../../model/rf_compact.json");
 
 // ── Inference helpers ──────────────────────────────────────────────────────────
 function scale(features: number[]): number[] {
@@ -56,9 +48,8 @@ function predictTree(tree: Tree, s: number[]): number {
 
 function rfPredict(raw: number[]): number {
   const s = scale(raw);
-  const model = getModel();
-  const sum = model.trees.reduce((acc, tree) => acc + predictTree(tree, s), 0);
-  return sum / model.trees.length;
+  const sum = MODEL.trees.reduce((acc, tree) => acc + predictTree(tree, s), 0);
+  return sum / MODEL.trees.length;
 }
 
 // ── Route handler ──────────────────────────────────────────────────────────────
@@ -70,7 +61,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Body JSON inválido." }, { status: 400 });
   }
 
-  // Validate all features are present and numeric
   const raw: number[] = [];
   for (const feat of FEATURES) {
     const val = body[feat];
